@@ -5,6 +5,10 @@
 [![AI](https://img.shields.io/badge/AI-LLM%20%2B%20RAG-blue.svg)](https://www.anthropic.com/)
 [![MLOps](https://img.shields.io/badge/MLOps-Enabled-green.svg)](https://aws.amazon.com/sagemaker/)
 
+> **🎯 New to AWS, CI/CD, or MLOps?** → **[START HERE!](START_HERE.md)** 🚀
+> 
+> Complete 15-day implementation plan with learning resources for RAG/Gen AI developers!
+
 ## 🧠 Project Overview
 
 The **AI Agent for Automated Technical Support** is a cloud-native, end-to-end intelligent system designed to automatically process, understand, and respond to technical support tickets using advanced AI and cloud technologies.
