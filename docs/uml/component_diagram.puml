@@ -1,0 +1,136 @@
+@startuml ComponentDiagram
+title System Component Architecture with AWS Services
+
+skinparam packageStyle rectangle
+
+package "Ingestion Layer" #LightBlue {
+    component [Kafka Producer] as Producer
+    component [Amazon MSK] as MSK
+}
+
+package "Enrichment Layer" #LightGreen {
+    component [Lambda/ECS\nEnrichment Service] as EnrichService
+    component [AWS Comprehend\nNLP Service] as Comprehend
+    database "S3 Bucket\nRaw Data" as S3Raw
+    database "DynamoDB\nMetadata" as DDBMeta
+}
+
+package "Embedding Layer" #LightYellow {
+    component [ECS Worker\nEmbedding Service] as Worker
+    component [SageMaker\nML Models] as SM1
+    component [Amazon Bedrock\nEmbedding API] as Bedrock
+    database "Qdrant\nVector Database" as Vector
+}
+
+package "AI Reasoning Layer" #LightCoral {
+    component [Lambda/ECS\nRAG Service] as RAG
+    component [Bedrock/SageMaker\nLLM Service] as SM2
+    component [Retrieval Engine] as Retrieval
+}
+
+package "Agent Layer" #LightCyan {
+    component [Triage Agent] as Triage
+    component [Response Agent] as Response
+    component [Escalation Agent] as Escalation
+    component [Quality Agent] as Quality
+    component [Learning Agent] as Learning
+}
+
+package "Orchestration Layer" #LightPink {
+    component [AWS Step Functions\nWorkflow Engine] as StepFn
+    component [EventBridge\nEvent Bus] as EventBridge
+    component [Automation Engine] as Automation
+}
+
+package "API & Frontend Layer" #LightSalmon {
+    component [API Gateway] as APIGW
+    component [AWS Cognito\nAuth Service] as Cognito
+    component [CloudFront\nCDN] as CloudFront
+    database "S3 Bucket\nWeb Hosting" as S3Web
+    component [React Dashboard] as React
+}
+
+package "MLOps Layer" #LightGoldenRodYellow {
+    component [SageMaker Pipelines\nTraining Pipeline] as Pipeline
+    database "Model Registry" as Registry
+    component [ECR\nContainer Registry] as ECR
+    database "S3 Bucket\nML Artifacts" as S3ML
+}
+
+package "Monitoring Layer" #LightGray {
+    component [CloudWatch] as CW
+    component [X-Ray] as XRay
+    component [SNS\nNotifications] as SNS
+}
+
+package "Storage Layer" #LightSteelBlue {
+    database "S3 Bucket\nFeedback Data" as S3Feedback
+    database "DynamoDB\nTicket Store" as DDBTickets
+    database "ElastiCache\nRedis Cache" as Cache
+}
+
+' Connections - Ingestion
+Producer --> MSK : stream
+MSK --> EnrichService : consume
+
+' Connections - Enrichment
+EnrichService --> Comprehend : analyze
+EnrichService --> S3Raw : store
+EnrichService --> DDBMeta : metadata
+EnrichService --> MSK : publish enriched
+
+' Connections - Embedding
+MSK --> Worker : consume
+Worker --> SM1 : generate embeddings
+Worker --> Bedrock : generate embeddings
+Worker --> Vector : index
+Worker --> DDBMeta : update refs
+
+' Connections - AI Reasoning
+RAG --> Vector : query
+RAG --> Retrieval : retrieve
+RAG --> SM2 : generate
+Retrieval --> Vector : search
+
+' Connections - Agents
+Triage --> RAG : classify
+Response --> RAG : generate
+Quality --> Response : validate
+Escalation --> StepFn : route
+Learning --> S3Feedback : analyze
+
+' Connections - Orchestration
+StepFn --> Triage : coordinate
+StepFn --> Response : coordinate
+StepFn --> Escalation : coordinate
+EventBridge --> StepFn : trigger
+Automation --> StepFn : execute
+
+' Connections - API & Frontend
+CloudFront --> S3Web : serve
+S3Web --> React : host
+React --> APIGW : API calls
+APIGW --> Cognito : authenticate
+APIGW --> StepFn : route
+APIGW --> Cache : cache
+
+' Connections - MLOps
+Learning --> Pipeline : trigger
+Pipeline --> SM1 : train
+Pipeline --> Registry : store
+Registry --> S3ML : artifacts
+Pipeline --> ECR : containers
+
+' Connections - Monitoring
+EnrichService ..> CW : log
+Worker ..> CW : log
+RAG ..> CW : log
+APIGW ..> XRay : trace
+CW --> SNS : alert
+
+' Connections - Storage
+Triage --> DDBTickets : read/write
+Response --> DDBTickets : read/write
+Learning --> S3Feedback : store
+
+@enduml

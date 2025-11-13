@@ -1,0 +1,84 @@
+@startuml MLOpsTrainingPipeline
+title MLOps Training Pipeline Activity
+
+start
+:Scheduled Trigger;
+
+if (Trigger Type?) then (Scheduled/Drift/Manual)
+  :Load Feedback Data from S3;
+  
+  if (Sufficient Data?) then (yes)
+    :Preprocess Data;
+    :Clean & Normalize;
+    :Split Train/Val/Test;
+    
+    fork
+      :Train Embedding Model;
+      :Validate on Test Set;
+      :Calculate Metrics;
+      
+      if (Better than Current?) then (yes)
+        :Register New Version;
+        :Tag as Candidate;
+      else (no)
+        :Archive Model;
+      endif
+    fork again
+      :Fine-tune LLM;
+      :Validate on Test Set;
+      :Calculate Metrics;
+      
+      if (Better than Current?) then (yes)
+        :Register New Version;
+        :Tag as Candidate;
+      else (no)
+        :Archive Model;
+      endif
+    end fork
+    
+    if (Any Model Improved?) then (yes)
+      :Deploy to Staging;
+      :Run Integration Tests;
+      
+      if (Tests Pass?) then (yes)
+        :Setup Canary (10%);
+        :Monitor Metrics;
+        :Wait 30 minutes;
+        
+        if (Canary Healthy?) then (yes)
+          :Increment to 50%;
+          :Monitor 30 min;
+          
+          if (Still Healthy?) then (yes)
+            :Deploy to 100%;
+            :Update Registry to Production;
+            :Notify Success;
+            :Update Documentation;
+            stop
+          else (no)
+            :Rollback Canary;
+            :Notify Canary Failure;
+            stop
+          endif
+        else (no)
+          :Rollback Canary;
+          :Notify Canary Failure;
+          stop
+        endif
+      else (no)
+        :Rollback Staging;
+        :Notify Failure;
+        stop
+      endif
+    else (no)
+      :Notify Team;
+      stop
+    endif
+  else (no)
+    :Log Warning;
+    :Schedule Next Run;
+    stop
+  endif
+endif
+
+@enduml

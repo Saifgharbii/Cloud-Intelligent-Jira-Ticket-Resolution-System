@@ -1,0 +1,518 @@
+# Class Diagram - System Components
+
+This class diagram shows the main components, services, and their relationships in the Cloud-Intelligent-Jira-Ticket-Resolution-System.
+
+## UML Class Diagram
+
+### Compilation Instructions
+```bash
+# To compile this diagram:
+plantuml docs/uml/class_diagram.puml
+# Or generate PNG:
+plantuml -tpng docs/uml/class_diagram.puml
+```
+
+### PlantUML Source
+
+Save this as `class_diagram.puml`:
+
+```plantuml
+@startuml ClassDiagram
+!define CORE_COLOR #E8F4F8
+!define STREAM_COLOR #FFF4E6
+!define ENRICH_COLOR #F3E5F5
+!define EMBED_COLOR #E8F5E9
+!define RAG_COLOR #FFF3E0
+!define AGENT_COLOR #E3F2FD
+!define WORKFLOW_COLOR #FCE4EC
+!define STORAGE_COLOR #F1F8E9
+!define MLOPS_COLOR #FBE9E7
+!define API_COLOR #E0F2F1
+
+skinparam class {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+' Core Domain Models
+package "Core Domain Models" CORE_COLOR {
+    class Ticket {
+        -String ticketId
+        -String project
+        -String title
+        -String description
+        -Priority priority
+        -Status status
+        -DateTime createdAt
+        -DateTime updatedAt
+        -List<Comment> comments
+        -Map<String,String> metadata
+        +validate(): bool
+        +toJSON(): string
+        +fromJSON(json): Ticket
+    }
+
+    class Comment {
+        -String commentId
+        -String author
+        -String content
+        -DateTime timestamp
+        +toString(): string
+    }
+
+    class EmbeddedTicket {
+        -String ticketId
+        -Vector embedding
+        -Map<String,String> metadata
+        -String s3Uri
+        +getVector(): Vector
+        +getSimilarity(other): float
+    }
+
+    class TicketMetadata {
+        -String language
+        -List<String> keywords
+        -float urgencyScore
+        -float sentimentScore
+        -String category
+        -List<String> tags
+        +addTag(tag): void
+        +calculateUrgency(): float
+    }
+}
+
+' Streaming Layer
+package "Streaming Layer" STREAM_COLOR {
+    class KafkaProducer {
+        -String bootstrapServers
+        -String topic
+        -ProducerConfig config
+        +connect(): bool
+        +sendTicket(ticket): bool
+        +close(): void
+    }
+
+    class KafkaConsumer {
+        -String bootstrapServers
+        -String groupId
+        -List<String> topics
+        -ConsumerConfig config
+        +subscribe(topics): void
+        +poll(timeout): List<Ticket>
+        +commit(): void
+        +close(): void
+    }
+
+    class StreamProcessor {
+        -KafkaConsumer consumer
+        -KafkaProducer producer
+        -String inputTopic
+        -String outputTopic
+        +process(): void
+        +transform(ticket): Ticket
+    }
+}
+
+' Enrichment Services
+package "Enrichment Layer" ENRICH_COLOR {
+    class EnrichmentService {
+        -NLPProcessor nlpProcessor
+        -S3Storage storage
+        -DynamoDBClient dbClient
+        +enrichTicket(ticket): EnrichedTicket
+        +extractMetadata(ticket): TicketMetadata
+        +saveToStorage(ticket): string
+    }
+
+    class NLPProcessor {
+        -ComprehendClient comprehend
+        -SpacyModel model
+        +detectLanguage(text): string
+        +extractKeywords(text): List<String>
+        +analyzeSentiment(text): float
+        +classifyUrgency(text): float
+    }
+
+    class TextNormalizer {
+        +clean(text): string
+        +removePII(text): string
+        +normalizeWhitespace(text): string
+    }
+}
+
+' Embedding Services
+package "Embedding Layer" EMBED_COLOR {
+    class EmbeddingService {
+        -EmbeddingModel model
+        -VectorStore vectorStore
+        -int dimension
+        +generateEmbedding(text): Vector
+        +batchEmbed(texts): List<Vector>
+        +indexTicket(ticket): bool
+    }
+
+    class EmbeddingModel {
+        -String modelName
+        -String endpoint
+        -int dimensions
+        +encode(text): Vector
+        +encodeMultiple(texts): List<Vector>
+        +getModelInfo(): ModelInfo
+    }
+
+    class VectorStore {
+        -QdrantClient client
+        -String collectionName
+        -int vectorSize
+        +createCollection(name, size): bool
+        +insert(id, vector, metadata): bool
+        +search(vector, topK): List<SearchResult>
+        +delete(id): bool
+        +update(id, vector, metadata): bool
+    }
+
+    class SearchResult {
+        -String ticketId
+        -float score
+        -Map<String,String> metadata
+        +getTicket(): Ticket
+    }
+}
+
+' RAG Components
+package "RAG Layer" RAG_COLOR {
+    class RAGService {
+        -RetrievalEngine retrieval
+        -LLMClient llm
+        -PromptBuilder promptBuilder
+        -float confidenceThreshold
+        +generateResponse(ticket): Response
+        +retrieveContext(query): List<Ticket>
+        +evaluate(response): float
+    }
+
+    class RetrievalEngine {
+        -VectorStore vectorStore
+        -EmbeddingService embedder
+        -int topK
+        +findSimilar(ticket): List<SearchResult>
+        +rankResults(results): List<SearchResult>
+    }
+
+    class LLMClient {
+        -String model
+        -String endpoint
+        -Map<String,Any> config
+        +generate(prompt): string
+        +chat(messages): string
+        +tokenize(text): List<int>
+        +countTokens(text): int
+    }
+
+    class PromptBuilder {
+        -String template
+        +buildPrompt(ticket, context): string
+        +addContext(context): void
+        +setSystemMessage(message): void
+    }
+
+    class Response {
+        -String responseId
+        -String content
+        -float confidence
+        -List<String> sources
+        -String reasoning
+        -Map<String,Any> metadata
+        +validate(): bool
+        +toJSON(): string
+    }
+}
+
+' Agent Components
+package "Agent Layer" AGENT_COLOR {
+    class TriageAgent {
+        -Classifier classifier
+        -PriorityEngine priorityEngine
+        +categorize(ticket): string
+        +determinePriority(ticket): Priority
+        +route(ticket): string
+    }
+
+    class ResponseAgent {
+        -RAGService ragService
+        -QualityChecker qualityChecker
+        +generateResponse(ticket): Response
+        +validateResponse(response): bool
+    }
+
+    class EscalationAgent {
+        -RuleEngine rules
+        -TeamRegistry teams
+        +shouldEscalate(ticket, response): bool
+        +findBestTeam(ticket): string
+        +createEscalation(ticket): Escalation
+    }
+
+    class QualityAgent {
+        -List<QualityRule> rules
+        -float minConfidence
+        +checkQuality(response): QualityScore
+        +validateCompleteness(response): bool
+        +checkFactuality(response, sources): bool
+    }
+
+    class LearningAgent {
+        -FeedbackStore feedbackStore
+        -ModelTrainer trainer
+        +collectFeedback(response, feedback): void
+        +analyzePatterns(): InsightReport
+        +triggerRetraining(): bool
+    }
+}
+
+' Workflow Orchestration
+package "Workflow Layer" WORKFLOW_COLOR {
+    class WorkflowOrchestrator {
+        -StepFunctionsClient sfnClient
+        -String stateMachineArn
+        +startExecution(ticket): string
+        +getExecutionStatus(executionId): string
+        +stopExecution(executionId): void
+    }
+
+    class AutomationEngine {
+        -RuleEngine ruleEngine
+        -float autoApprovalThreshold
+        +shouldAutoApprove(response): bool
+        +executeAction(action): bool
+        +sendReply(ticket, response): bool
+    }
+}
+
+' Storage Layer
+package "Storage Layer" STORAGE_COLOR {
+    class S3Storage {
+        -S3Client client
+        -String bucketName
+        +upload(key, data): string
+        +download(key): bytes
+        +listObjects(prefix): List<String>
+        +delete(key): bool
+    }
+
+    class DynamoDBClient {
+        -DynamoDBClient client
+        -String tableName
+        +putItem(item): bool
+        +getItem(key): Map<String,Any>
+        +query(conditions): List<Map>
+        +updateItem(key, updates): bool
+    }
+}
+
+' MLOps Components
+package "MLOps Layer" MLOPS_COLOR {
+    class ModelRegistry {
+        -String registryName
+        -S3Storage storage
+        +registerModel(model, version): bool
+        +getLatestModel(name): ModelVersion
+        +listVersions(name): List<ModelVersion>
+        +promoteToProduction(version): bool
+    }
+
+    class TrainingPipeline {
+        -SageMakerClient sageMaker
+        -DataProcessor dataProcessor
+        -ModelEvaluator evaluator
+        +prepareData(): Dataset
+        +trainModel(dataset): Model
+        +evaluateModel(model): Metrics
+        +deployModel(model): Endpoint
+    }
+
+    class ModelMonitor {
+        -CloudWatchClient cloudWatch
+        -DriftDetector driftDetector
+        +trackMetrics(metrics): void
+        +detectDrift(data): DriftReport
+        +sendAlert(alert): void
+    }
+}
+
+' API Layer
+package "API Layer" API_COLOR {
+    class APIGateway {
+        -String endpoint
+        -Authenticator auth
+        -RateLimiter rateLimiter
+        +handleRequest(request): Response
+        +authenticate(token): bool
+        +routeRequest(path): Handler
+    }
+
+    class TicketController {
+        -TicketService ticketService
+        +createTicket(request): Ticket
+        +getTicket(id): Ticket
+        +listTickets(filters): List<Ticket>
+        +updateTicket(id, updates): Ticket
+    }
+
+    class ResponseController {
+        -ResponseService responseService
+        +getResponse(ticketId): Response
+        +submitFeedback(responseId, feedback): bool
+        +regenerateResponse(ticketId): Response
+    }
+}
+
+' Enums
+enum Priority {
+    P0_CRITICAL
+    P1_HIGH
+    P2_MEDIUM
+    P3_LOW
+}
+
+enum Status {
+    OPEN
+    IN_PROGRESS
+    WAITING_FOR_RESPONSE
+    RESOLVED
+    CLOSED
+    ESCALATED
+}
+
+' Relationships - Core
+Ticket "1" *-- "0..*" Comment : contains
+Ticket "1" -- "1" TicketMetadata : has
+Ticket "1" ..> "1" EmbeddedTicket : transforms to
+
+' Relationships - Streaming
+KafkaProducer ..> Ticket : produces
+KafkaConsumer ..> Ticket : consumes
+StreamProcessor --> KafkaConsumer : uses
+StreamProcessor --> KafkaProducer : uses
+
+' Relationships - Enrichment
+EnrichmentService --> NLPProcessor : uses
+EnrichmentService --> TextNormalizer : uses
+EnrichmentService --> S3Storage : uses
+EnrichmentService --> DynamoDBClient : uses
+EnrichmentService ..> Ticket : enriches
+EnrichmentService ..> TicketMetadata : creates
+
+' Relationships - Embedding
+EmbeddingService --> EmbeddingModel : uses
+EmbeddingService --> VectorStore : uses
+EmbeddingService ..> EmbeddedTicket : creates
+VectorStore ..> SearchResult : returns
+
+' Relationships - RAG
+RAGService --> RetrievalEngine : uses
+RAGService --> LLMClient : uses
+RAGService --> PromptBuilder : uses
+RAGService ..> Response : generates
+RetrievalEngine --> VectorStore : queries
+RetrievalEngine --> EmbeddingService : uses
+
+' Relationships - Agents
+TriageAgent ..> Ticket : processes
+ResponseAgent --> RAGService : uses
+ResponseAgent --> QualityAgent : validates with
+EscalationAgent ..> Ticket : escalates
+QualityAgent ..> Response : validates
+
+' Relationships - Workflow
+WorkflowOrchestrator --> TriageAgent : orchestrates
+WorkflowOrchestrator --> ResponseAgent : orchestrates
+WorkflowOrchestrator --> EscalationAgent : orchestrates
+AutomationEngine ..> Response : processes
+
+' Relationships - MLOps
+ModelRegistry --> S3Storage : uses
+TrainingPipeline --> ModelRegistry : registers to
+
+' Relationships - API
+APIGateway --> TicketController : routes to
+APIGateway --> ResponseController : routes to
+TicketController --> WorkflowOrchestrator : triggers
+ResponseController --> ResponseAgent : uses
+
+@enduml
+```
+
+## Component Descriptions
+
+### Core Domain Models
+- **Ticket**: Main entity representing a support ticket with all its attributes
+- **Comment**: User comments and discussions on tickets
+- **EmbeddedTicket**: Vectorized representation for semantic search
+- **TicketMetadata**: Extracted metadata like language, keywords, sentiment
+
+### Streaming Layer
+- **KafkaProducer/Consumer**: Handle real-time ticket streaming
+- **StreamProcessor**: Transforms tickets between different stages
+
+### Enrichment Services
+- **EnrichmentService**: Orchestrates ticket enrichment pipeline
+- **NLPProcessor**: Performs natural language processing tasks
+- **TextNormalizer**: Cleans and normalizes text data
+
+### Embedding Services
+- **EmbeddingService**: Generates vector embeddings for tickets
+- **EmbeddingModel**: ML model wrapper for encoding text
+- **VectorStore**: Qdrant client for vector operations
+
+### RAG Components
+- **RAGService**: Main service coordinating retrieval and generation
+- **RetrievalEngine**: Finds similar historical tickets
+- **LLMClient**: Interface to large language models
+- **PromptBuilder**: Constructs prompts for LLM
+- **Response**: Generated response with metadata
+
+### Agent Components
+- **TriageAgent**: Categorizes and prioritizes tickets
+- **ResponseAgent**: Generates responses using RAG
+- **EscalationAgent**: Routes complex tickets to specialists
+- **QualityAgent**: Validates response quality
+- **LearningAgent**: Manages continuous learning from feedback
+
+### Workflow & Automation
+- **WorkflowOrchestrator**: AWS Step Functions integration
+- **AutomationEngine**: Rule-based automation logic
+
+### Storage Layer
+- **S3Storage**: Object storage operations
+- **DynamoDBClient**: NoSQL database operations
+
+### MLOps Components
+- **ModelRegistry**: Manages model versions
+- **TrainingPipeline**: Orchestrates model training
+- **ModelMonitor**: Tracks model performance and drift
+
+### API Layer
+- **APIGateway**: Routes and authenticates API requests
+- **TicketController/ResponseController**: REST API handlers
+
+## Design Patterns Used
+
+1. **Repository Pattern**: Data access abstraction (S3Storage, DynamoDBClient)
+2. **Service Layer Pattern**: Business logic encapsulation (EnrichmentService, RAGService)
+3. **Strategy Pattern**: Different agent implementations
+4. **Builder Pattern**: PromptBuilder for complex object construction
+5. **Facade Pattern**: APIGateway simplifies complex subsystem interactions
+6. **Observer Pattern**: Event-driven processing via Kafka
+7. **Chain of Responsibility**: Agent pipeline processing
+
+## Key Interactions
+
+1. **Ticket Ingestion Flow**: KafkaProducer → KafkaConsumer → EnrichmentService
+2. **Embedding Flow**: EmbeddingService → EmbeddingModel → VectorStore
+3. **Response Generation**: RAGService → RetrievalEngine → LLMClient
+4. **Agent Coordination**: WorkflowOrchestrator → Multiple Agents
+5. **Feedback Loop**: LearningAgent → TrainingPipeline → ModelRegistry
+
+This class diagram provides a comprehensive view of the system's object-oriented design, showing clear separation of concerns and well-defined interfaces between components.

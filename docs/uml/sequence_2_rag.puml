@@ -1,0 +1,61 @@
+@startuml RAGProcessingSequence
+title RAG (Retrieval-Augmented Generation) Flow
+
+participant "API Gateway" as API
+participant "Response Agent" as Agent
+participant "RAG Service" as RAG
+participant "Embedding Service" as Embed
+database "Vector Store" as Vector
+participant "LLM Client" as LLM
+participant "Quality Agent" as Quality
+
+API -> Agent: New Ticket Request
+activate Agent
+
+Agent -> RAG: Generate Response(ticket)
+activate RAG
+
+RAG -> Embed: Generate Query Embedding
+activate Embed
+Embed --> RAG: Vector Embedding
+deactivate Embed
+
+RAG -> Vector: Search Similar Tickets (topK=5)
+activate Vector
+Vector -> Vector: Cosine Similarity Search
+Vector --> RAG: Similar Tickets + Scores
+deactivate Vector
+
+RAG -> RAG: Build Context from Results
+RAG -> RAG: Construct Prompt
+
+RAG -> LLM: Generate(prompt, context)
+activate LLM
+LLM -> LLM: Process with Context
+LLM -> LLM: Generate Response
+LLM --> RAG: Generated Text
+deactivate LLM
+
+RAG -> RAG: Calculate Confidence Score
+RAG -> RAG: Extract Reasoning
+RAG --> Agent: Response Object
+deactivate RAG
+
+Agent -> Quality: Validate Response
+activate Quality
+Quality -> Quality: Check Completeness
+Quality -> Quality: Verify Factuality
+Quality -> Quality: Score Quality
+Quality --> Agent: Quality Metrics
+deactivate Quality
+
+alt Quality Score High
+    Agent -> Agent: Mark for Auto-Approval
+else Quality Score Low
+    Agent -> Agent: Flag for Human Review
+end
+
+Agent --> API: Response + Metadata
+deactivate Agent
+
+@enduml

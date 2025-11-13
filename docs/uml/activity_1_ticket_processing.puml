@@ -1,0 +1,78 @@
+@startuml TicketProcessingActivity
+title End-to-End Ticket Processing Activity
+
+start
+:New Ticket Arrives;
+:Ingest via Kafka;
+
+if (Valid Format?) then (yes)
+  :Enrich Ticket Data;
+  :NLP Analysis;
+  :Store Raw + Metadata;
+  :Generate Embeddings;
+  :Index in Vector Store;
+  
+  :Triage Agent Processing;
+  :Classify Category;
+  :Determine Priority;
+  
+  if (Priority Level?) then (P0 Critical)
+    :Immediate Escalation;
+    :Notify On-Call Team;
+    :Create Incident;
+    stop
+  elseif (P1-P3) then
+    :RAG Processing;
+    :Retrieve Similar Tickets;
+    :Generate Response;
+    :Calculate Confidence;
+    
+    :Quality Validation;
+    
+    if (Quality Score?) then (Low)
+      :Flag for Review;
+      :Queue for Human Agent;
+      
+      :Agent Reviews Response;
+      
+      if (Agent Decision?) then (Approve)
+        :Send Response to User;
+      elseif (Edit) then
+        :Agent Edits Response;
+        :Send Response to User;
+      elseif (Reject) then
+        :Regenerate Response;
+        :RAG Processing;
+        stop
+      else (Escalate)
+        :Escalate to Specialist;
+        stop
+      endif
+      
+    elseif (Medium/High) then
+      if (Confidence > 0.85?) then (yes)
+        :Auto-Approve Response;
+        :Send Response to User;
+      else (no)
+        if (Complex Issue?) then (yes)
+          :Escalate to Specialist;
+          stop
+        else (no)
+          :Queue for Human Agent;
+        endif
+      endif
+    endif
+  endif
+  
+  :Update Ticket Status;
+  :Log Interaction;
+  :Collect Feedback;
+  :Store for Learning;
+  stop
+  
+else (no)
+  :Log Error & Reject;
+  stop
+endif
+
+@enduml
