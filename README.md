@@ -5,6 +5,10 @@
 [![AI](https://img.shields.io/badge/AI-LLM%20%2B%20RAG-blue.svg)](https://www.anthropic.com/)
 [![MLOps](https://img.shields.io/badge/MLOps-Enabled-green.svg)](https://aws.amazon.com/sagemaker/)
 
+> **🎯 New to AWS, CI/CD, or MLOps?** → **[START HERE!](START_HERE.md)** 🚀
+> 
+> Complete 15-day implementation plan with learning resources for RAG/Gen AI developers!
+
 ## 🧠 Project Overview
 
 The **AI Agent for Automated Technical Support** is a cloud-native, end-to-end intelligent system designed to automatically process, understand, and respond to technical support tickets using advanced AI and cloud technologies.
@@ -51,6 +55,28 @@ The system uses the **Public Jira Dataset** from Zenodo ([link](https://zenodo.o
 ## 📚 Documentation
 
 Comprehensive system design documentation is available in the `/docs` directory:
+
+### 🚀 Getting Started (START HERE!)
+- **[PROJECT_IMPLEMENTATION_PLAN.md](PROJECT_IMPLEMENTATION_PLAN.md)** - Complete 15-day implementation plan (6 hours/day)
+  - Perfect for beginners in CI/CD, AWS, and MLOps
+  - Day-by-day breakdown with hour estimates
+  - Learning resources and tutorials
+  - Cost management and troubleshooting
+  
+- **[LEARNING_ROADMAP.md](LEARNING_ROADMAP.md)** - Structured learning path for AWS, CI/CD & MLOps
+  - Pre-study recommendations
+  - Essential AWS services guide
+  - Hands-on tutorials and practice exercises
+  
+- **[PROGRESS_TRACKER.md](PROGRESS_TRACKER.md)** - Track your daily progress
+  - Daily checkpoints and milestones
+  - Time tracking and skill development
+  - Retrospective template
+  
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - One-page cheat sheet
+  - Essential commands (AWS CLI, Docker, Git, Terraform)
+  - Code snippets and common patterns
+  - Troubleshooting quick fixes
 
 ### Architecture Documentation
 - [System Architecture Overview](docs/architecture/SYSTEM_ARCHITECTURE.md)
@@ -232,10 +258,41 @@ Drift Detection → Retraining (Loop)
 
 ## 🚦 Getting Started
 
-Detailed setup instructions coming soon in:
-- `/docs/SETUP.md` - Installation and configuration
-- `/docs/DEPLOYMENT.md` - Deployment guide
-- `/docs/API.md` - API documentation
+### For New Developers (First Time with AWS/CI/CD/MLOps)
+
+**Start with these documents in order:**
+
+1. **[PROJECT_IMPLEMENTATION_PLAN.md](PROJECT_IMPLEMENTATION_PLAN.md)** - Your 15-day roadmap
+   - Complete day-by-day schedule (6 hours/day)
+   - Perfect for RAG/Gen AI developers new to cloud
+   - Includes all learning resources and tutorials
+
+2. **[LEARNING_ROADMAP.md](LEARNING_ROADMAP.md)** - Pre-study materials
+   - Recommended 1-week preparation
+   - Essential AWS concepts
+   - CI/CD and MLOps fundamentals
+
+3. **[PROGRESS_TRACKER.md](PROGRESS_TRACKER.md)** - Track your journey
+   - Daily checklists and milestones
+   - Time and cost tracking
+   - Retrospective templates
+
+4. **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Keep this handy!
+   - Essential commands and code snippets
+   - Quick troubleshooting guide
+
+### For Experienced Developers
+
+Jump straight to the technical documentation:
+- [System Design Guide](docs/SYSTEM_DESIGN_GUIDE.md) - Complete architecture
+- [Quick Start Guide](QUICK_START.md) - 5-minute overview
+- [UML Diagrams](docs/uml/) - Visual architecture
+
+### Time Commitment
+
+- **Total Project:** 15 days × 6 hours = 90 hours
+- **Pre-study (Optional):** 20-30 hours over 1 week
+- **Estimated AWS Cost:** $300-500 for full implementation
 
 ## 💼 Business Value
 
