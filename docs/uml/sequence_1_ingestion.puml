@@ -1,0 +1,60 @@
+@startuml TicketIngestionSequence
+title Ticket Ingestion and Processing Flow
+
+actor "Kafka Producer" as Producer
+participant "Amazon MSK" as MSK
+participant "Stream Consumer" as Consumer
+participant "Enrichment Service" as Enrich
+participant "NLP Processor" as NLP
+database "S3 Storage" as S3
+database "DynamoDB" as DDB
+queue "Kafka (enriched)" as Kafka2
+
+activate Producer
+Producer -> MSK: Publish Raw Ticket
+activate MSK
+
+MSK -> Consumer: Deliver Ticket Message
+activate Consumer
+
+Consumer -> Enrich: Process Ticket
+activate Enrich
+
+Enrich -> NLP: Analyze Text
+activate NLP
+NLP -> NLP: Detect Language
+NLP -> NLP: Extract Keywords
+NLP -> NLP: Analyze Sentiment
+NLP -> NLP: Calculate Urgency
+NLP --> Enrich: Return Metadata
+deactivate NLP
+
+Enrich -> Enrich: Normalize Text
+Enrich -> Enrich: Remove PII
+
+par Parallel Storage Operations
+    Enrich -> S3: Store Raw JSON
+    activate S3
+    S3 --> Enrich: S3 URI
+    deactivate S3
+else
+    Enrich -> DDB: Store Metadata
+    activate DDB
+    DDB --> Enrich: Success
+    deactivate DDB
+end
+
+Enrich -> Kafka2: Publish Enriched Ticket
+activate Kafka2
+Kafka2 --> Enrich: Ack
+deactivate Kafka2
+
+Enrich --> Consumer: Success
+deactivate Enrich
+
+Consumer --> MSK: Commit Offset
+deactivate Consumer
+deactivate MSK
+deactivate Producer
+
+@enduml

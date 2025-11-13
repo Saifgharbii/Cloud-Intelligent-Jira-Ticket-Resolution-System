@@ -1,0 +1,188 @@
+@startuml DeploymentDiagram
+title AWS Infrastructure Deployment Diagram
+
+skinparam nodeStyle rectangle
+
+node "AWS Cloud" {
+    
+    node "Region: us-east-1" {
+        
+        node "VPC: 10.0.0.0/16" {
+            
+            node "Public Subnet AZ-1" {
+                node "NAT Gateway" as NAT1
+                node "ALB" as ALB1
+            }
+            
+            node "Public Subnet AZ-2" {
+                node "NAT Gateway" as NAT2
+            }
+            
+            node "Private Subnet AZ-1" {
+                node "ECS Cluster" as ECS1 {
+                    component "Enrichment Service" as EnrichSvc1
+                    component "Embedding Worker" as EmbedWork1
+                    component "RAG Service" as RAGSvc1
+                    component "Qdrant Container" as Qdrant1
+                }
+                
+                component "Kafka Producer\nt3.medium" as Producer1
+            }
+            
+            node "Private Subnet AZ-2" {
+                node "ECS Cluster" as ECS2 {
+                    component "Enrichment Service" as EnrichSvc2
+                    component "Embedding Worker" as EmbedWork2
+                    component "RAG Service" as RAGSvc2
+                    component "Qdrant Container" as Qdrant2
+                }
+                
+                component "Kafka Producer\nt3.medium" as Producer2
+            }
+            
+            node "Data Subnet AZ-1" {
+                database "MSK Broker 1" as MSK1
+                database "MSK Broker 2" as MSK2
+            }
+            
+            node "Data Subnet AZ-2" {
+                database "MSK Broker 3" as MSK3
+            }
+        }
+        
+        node "Serverless Services" {
+            component "Lambda Functions" as Lambda1
+            component "Step Functions" as StepFn
+            component "EventBridge" as EB
+            component "API Gateway" as APIGW
+        }
+        
+        node "Managed Services" {
+            node "SageMaker" as SM {
+                component "Training Jobs"
+                component "Inference Endpoints"
+                component "Model Registry"
+            }
+            
+            node "Bedrock" as Bedrock {
+                component "Claude/GPT"
+                component "Titan Embeddings"
+            }
+            
+            component "Comprehend" as Comprehend
+        }
+        
+        node "Storage Services" {
+            database "S3 Buckets" as S3Buckets {
+                component "Raw Data"
+                component "ML Artifacts"
+                component "Feedback Data"
+                component "Web Assets"
+            }
+            
+            database "DynamoDB Tables" as DDB {
+                component "Tickets"
+                component "Metadata"
+                component "User Sessions"
+            }
+            
+            database "ElastiCache\nRedis Cluster" as Redis {
+                component "Cache Node 1"
+                component "Cache Node 2"
+            }
+        }
+        
+        node "Security Services" {
+            component "IAM" as IAM
+            component "Cognito" as Cognito
+            component "Secrets Manager" as Secrets
+            component "KMS" as KMS
+            component "WAF" as WAF
+        }
+        
+        node "Monitoring Services" {
+            component "CloudWatch" as CW
+            component "X-Ray" as XRay
+            component "SNS" as SNS
+        }
+    }
+    
+    node "CloudFront Distribution" as CF {
+        component "Edge Locations (Global)"
+    }
+}
+
+node "External Users" {
+    actor "End Users" as Users
+    actor "Support Agents" as Agents
+}
+
+' Connections
+Users --> CF : HTTPS
+Agents --> CF : HTTPS
+CF --> S3Buckets : Serve Static Content
+CF --> APIGW : API Requests
+
+APIGW --> WAF : Filter
+APIGW --> Cognito : Authenticate
+APIGW --> Lambda1 : Invoke
+APIGW --> StepFn : Trigger Workflow
+APIGW --> Redis : Cache
+
+Lambda1 --> DDB : Read/Write
+Lambda1 --> S3Buckets : Store
+Lambda1 --> MSK1 : Produce
+
+StepFn --> Lambda1 : Orchestrate
+StepFn --> ECS1 : Invoke Services
+
+Producer1 --> MSK1 : Produce
+Producer2 --> MSK3 : Produce
+
+MSK1 --> EnrichSvc1 : Consume
+MSK2 --> EnrichSvc2 : Consume
+
+EnrichSvc1 --> Comprehend : Analyze
+EnrichSvc1 --> S3Buckets : Store
+EnrichSvc1 --> DDB : Metadata
+
+EmbedWork1 --> SM : Generate Embeddings
+EmbedWork1 --> Bedrock : Generate Embeddings
+EmbedWork1 --> Qdrant1 : Index
+
+RAGSvc1 --> Qdrant1 : Search
+RAGSvc1 --> Bedrock : LLM Generate
+
+Qdrant1 <--> Qdrant2 : Replicate
+
+' Security Connections
+IAM ..> ECS1 : Authorize
+IAM ..> Lambda1 : Authorize
+Secrets ..> ECS1 : Provide Credentials
+KMS ..> S3Buckets : Encrypt
+
+' Monitoring Connections
+ECS1 ..> CW : Logs & Metrics
+Lambda1 ..> CW : Logs & Metrics
+APIGW ..> XRay : Traces
+CW --> SNS : Alerts
+
+note right of CF
+  Global CDN
+  Edge caching
+  DDoS protection
+end note
+
+note bottom of VPC
+  Multi-AZ deployment
+  Auto-scaling enabled
+  High availability
+end note
+
+note right of MSK1
+  3-broker cluster
+  Multi-AZ
+  Data replication
+end note
+
+@enduml

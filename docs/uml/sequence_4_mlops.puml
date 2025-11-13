@@ -1,0 +1,95 @@
+@startuml FeedbackAndRetrainingPipeline
+title Feedback Loop and Retraining Pipeline
+
+actor "Agent Dashboard" as Dashboard
+participant "API Gateway" as API
+participant "Learning Agent" as Learning
+database "S3 Storage" as S3
+participant "Training Pipeline" as Pipeline
+participant "SageMaker" as SageMaker
+database "Model Registry" as Registry
+participant "Deployment Service" as Deploy
+participant "Model Monitor" as Monitor
+
+Dashboard -> API: Submit Feedback
+activate API
+API -> Learning: Store Feedback
+activate Learning
+
+Learning -> S3: Append to Feedback Dataset
+activate S3
+S3 --> Learning: Success
+deactivate S3
+
+Learning -> Learning: Update Metrics
+Learning --> API: Feedback Recorded
+deactivate Learning
+API --> Dashboard: Confirmation
+deactivate API
+
+note over Learning, Pipeline: Periodic Trigger (e.g., weekly)
+
+Pipeline -> S3: Load Feedback Data
+activate Pipeline
+activate S3
+S3 --> Pipeline: Dataset
+deactivate S3
+
+Pipeline -> Pipeline: Preprocess Data
+Pipeline -> Pipeline: Split Train/Val/Test
+
+Pipeline -> SageMaker: Launch Training Job
+activate SageMaker
+SageMaker -> SageMaker: Fine-tune Embedding Model
+SageMaker -> SageMaker: Fine-tune LLM
+SageMaker --> Pipeline: Training Complete
+deactivate SageMaker
+
+Pipeline -> Pipeline: Evaluate Models
+Pipeline -> Pipeline: Calculate Metrics
+
+alt Metrics Improved
+    Pipeline -> Registry: Register New Version
+    activate Registry
+    Registry -> Registry: Store Model Artifacts
+    Registry -> Registry: Version Metadata
+    Registry --> Pipeline: Version Registered
+    deactivate Registry
+    
+    Pipeline -> Deploy: Deploy to Staging
+    activate Deploy
+    Deploy -> Deploy: Blue-Green Setup
+    Deploy -> Deploy: Run Integration Tests
+    
+    alt Tests Pass
+        Deploy -> Deploy: Canary Deployment (10%)
+        Deploy -> Monitor: Monitor Metrics
+        activate Monitor
+        Monitor -> Monitor: Track Performance
+        Monitor -> Monitor: Compare with Baseline
+        
+        alt Canary Success
+            Deploy -> Deploy: Full Rollout (100%)
+            Deploy --> Pipeline: Deployment Complete
+            Monitor --> Deploy: Metrics Stable
+            deactivate Monitor
+        else Canary Failure
+            Deploy -> Deploy: Rollback
+            Deploy --> Pipeline: Deployment Failed
+            Monitor --> Deploy: Metrics Degraded
+            deactivate Monitor
+        end
+    else Tests Fail
+        Deploy -> Deploy: Abort Deployment
+        Deploy --> Pipeline: Deployment Aborted
+    end
+    deactivate Deploy
+else Metrics Not Improved
+    Pipeline -> Pipeline: Keep Current Model
+    Pipeline -> S3: Archive Training Data
+end
+
+Pipeline -> Learning: Update Training Status
+deactivate Pipeline
+
+@enduml

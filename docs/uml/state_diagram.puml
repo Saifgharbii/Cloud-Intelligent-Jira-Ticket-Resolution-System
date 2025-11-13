@@ -1,0 +1,85 @@
+@startuml TicketLifecycleState
+title Ticket Lifecycle State Diagram
+
+[*] --> New : Ticket Created
+
+New --> Validating : Submit for Processing
+Validating --> Rejected : Invalid Format
+Validating --> Enriching : Valid
+
+Rejected --> [*]
+
+Enriching --> Enriched : NLP Complete
+Enriched --> Embedded : Generate Vectors
+Embedded --> Triaged : Categorize & Prioritize
+
+Triaged --> Critical_Escalated : P0 Priority
+Triaged --> Generating_Response : P1-P3 Priority
+
+Critical_Escalated --> Assigned_To_Oncall : Alert Team
+Assigned_To_Oncall --> In_Progress : Team Accepts
+Assigned_To_Oncall --> Reassigned : Team Unavailable
+
+Reassigned --> Assigned_To_Oncall : New Team Found
+
+In_Progress --> Waiting_For_Info : Need User Input
+In_Progress --> Resolved : Issue Fixed
+In_Progress --> Escalated : Complex Issue
+
+Waiting_For_Info --> In_Progress : Info Received
+Waiting_For_Info --> Closed : Timeout/No Response
+
+Generating_Response --> Quality_Check : Response Generated
+
+Quality_Check --> Auto_Approved : High Quality & Confidence
+Quality_Check --> Manual_Review : Low Quality/Confidence
+Quality_Check --> Failed : Quality Too Low
+
+Failed --> Generating_Response : Regenerate
+
+Auto_Approved --> Response_Sent : Send to User
+Manual_Review --> Human_Review_Queue : Queue for Agent
+
+Human_Review_Queue --> Agent_Reviewing : Agent Picked Up
+Agent_Reviewing --> Response_Sent : Agent Approves
+Agent_Reviewing --> Agent_Editing : Agent Edits
+Agent_Reviewing --> Generating_Response : Agent Rejects
+Agent_Reviewing --> Specialist_Escalated : Agent Escalates
+
+Agent_Editing --> Response_Sent : Edit Complete
+
+Response_Sent --> Awaiting_Feedback : Response Delivered
+
+Awaiting_Feedback --> Resolved : Positive Feedback
+Awaiting_Feedback --> Reopened : Negative Feedback
+Awaiting_Feedback --> Resolved : Timeout (Assume Success)
+
+Reopened --> Generating_Response : Try Again
+Reopened --> Specialist_Escalated : Complex
+
+Specialist_Escalated --> Assigned_To_Specialist : Specialist Found
+Assigned_To_Specialist --> In_Progress : Specialist Accepts
+
+Escalated --> Assigned_To_Specialist : Route to Expert
+
+Resolved --> Closed : Verification Period Passed
+Resolved --> Reopened : User Reopens
+
+Closed --> [*]
+
+note right of Critical_Escalated
+  P0 tickets bypass
+  normal workflow
+end note
+
+note right of Auto_Approved
+  Confidence > 0.85
+  Quality > 0.8
+end note
+
+note right of Awaiting_Feedback
+  System learns from
+  all feedback
+end note
+
+@enduml

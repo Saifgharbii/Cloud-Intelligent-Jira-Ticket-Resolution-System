@@ -1,0 +1,117 @@
+@startuml CICDPipeline
+title CI/CD Pipeline Activity
+
+start
+:Git Push;
+:GitHub Webhook;
+:Trigger CodePipeline;
+
+:Source Stage;
+:Checkout Code;
+:Validate Config;
+
+if (Valid?) then (yes)
+  :Build Stage;
+  :Install Dependencies;
+  :Run Linters;
+  
+  if (Lint Pass?) then (yes)
+    :Run Unit Tests;
+    
+    if (Tests Pass?) then (yes)
+      :Build Artifacts;
+      
+      fork
+        :Build Docker Images;
+        :Push to ECR;
+      fork again
+        :Package Lambda Functions;
+        :Package to S3;
+      fork again
+        :Build React App;
+        :Upload to S3;
+      end fork
+      
+      :Security Scanning;
+      
+      if (Vulnerabilities Found?) then (None/Low)
+        :Package Stage;
+        :Validate Terraform;
+        :Terraform Plan;
+        
+        if (Auto-Deploy Enabled?) then (no)
+          :Wait for Approval;
+          
+          if (Approved?) then (yes)
+            :Deploy Stage;
+          else (no)
+            stop
+          endif
+        else (yes)
+          :Deploy Stage;
+        endif
+        
+        :Deploy Infrastructure;
+        
+        if (Infra Success?) then (yes)
+          fork
+            :Deploy ECS Services;
+            :Wait for ECS Healthy;
+          fork again
+            :Update Lambda Functions;
+            :Verify Lambda Versions;
+          fork again
+            :Deploy Frontend;
+            :Invalidate CloudFront;
+          end fork
+          
+          :Test Stage;
+          :Run Smoke Tests;
+          :Run Integration Tests;
+          
+          if (All Tests Pass?) then (yes)
+            :Health Check Endpoints;
+            
+            if (All Healthy?) then (yes)
+              :Update DNS/Routing;
+              :Notify Success;
+              :Tag Release;
+              :Update Documentation;
+              stop
+            else (no)
+              :Rollback Deployment;
+              :Notify Rollback;
+              stop
+            endif
+          else (no)
+            :Rollback Deployment;
+            :Notify Rollback;
+            stop
+          endif
+        else (no)
+          :Rollback Infrastructure;
+          :Notify Failure;
+          stop
+        endif
+      else (Critical)
+        :Fail Pipeline;
+        :Notify Team;
+        stop
+      endif
+    else (no)
+      :Fail Pipeline;
+      :Notify Team;
+      stop
+    endif
+  else (no)
+    :Fail Pipeline;
+    :Notify Team;
+    stop
+  endif
+else (no)
+  :Fail Pipeline;
+  :Notify Team;
+  stop
+endif
+
+@enduml

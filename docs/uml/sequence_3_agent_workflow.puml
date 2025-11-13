@@ -1,0 +1,79 @@
+@startuml MultiAgentWorkflow
+title Multi-Agent Workflow Orchestration
+
+participant "API Gateway" as API
+participant "Workflow\nOrchestrator" as Orch
+participant "Triage Agent" as Triage
+participant "Response Agent" as Response
+participant "Escalation Agent" as Escalation
+participant "Quality Agent" as Quality
+participant "Automation Engine" as Auto
+actor "Human Dashboard" as Human
+
+API -> Orch: New Ticket Submitted
+activate Orch
+
+Orch -> Triage: Categorize & Prioritize
+activate Triage
+Triage -> Triage: Classify Category
+Triage -> Triage: Determine Priority
+Triage -> Triage: Calculate SLA
+Triage --> Orch: Category, Priority, SLA
+deactivate Triage
+
+alt Priority = P0 (Critical)
+    Orch -> Escalation: Immediate Escalation
+    activate Escalation
+    Escalation -> Escalation: Find On-Call Team
+    Escalation -> Escalation: Create Alert
+    Escalation --> Orch: Escalation Created
+    deactivate Escalation
+    Orch -> Human: Notify Team
+else Priority = P1-P3
+    Orch -> Response: Generate Response
+    activate Response
+    Response -> Response: RAG Processing
+    Response --> Orch: Response + Confidence
+    deactivate Response
+    
+    Orch -> Quality: Validate Response
+    activate Quality
+    Quality -> Quality: Quality Checks
+    Quality --> Orch: Quality Score
+    deactivate Quality
+    
+    alt Confidence > 0.85 AND Quality > 0.8
+        Orch -> Auto: Auto-Approve Response
+        activate Auto
+        Auto -> Auto: Apply Business Rules
+        Auto -> Auto: Send Response to User
+        Auto -> Auto: Update Ticket Status
+        Auto --> Orch: Auto-Resolved
+        deactivate Auto
+    else Confidence <= 0.85 OR Quality <= 0.8
+        Orch -> Escalation: Check Escalation Criteria
+        activate Escalation
+        Escalation -> Escalation: Evaluate Complexity
+        
+        alt Should Escalate
+            Escalation -> Escalation: Route to Specialist
+            Escalation --> Orch: Escalated
+            Orch -> Human: Queue for Specialist
+        else Manual Review
+            Escalation --> Orch: Queue for Review
+            deactivate Escalation
+            Orch -> Human: Queue for Agent
+            activate Human
+            Human -> Human: Agent Reviews
+            Human -> Human: Agent Edits/Approves
+            Human --> Orch: Feedback
+            deactivate Human
+        end
+    end
+end
+
+Orch -> Orch: Log Interaction
+Orch --> API: Workflow Complete
+deactivate Orch
+
+@enduml
