@@ -38,6 +38,7 @@ cached_data/
 *.sqlite3
 *.db
 *.db-journal
+*.archive
 downloads/
 incoming/
 
