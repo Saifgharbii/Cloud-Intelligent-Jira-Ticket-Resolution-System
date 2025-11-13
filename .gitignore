@@ -1,0 +1,132 @@
+# .gitignore - AI / ML project defaults
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+venv/
+.venv/
+env/
+ENV/
+.venv/
+.env
+.env.*
+python-env/
+
+# Jupyter / notebooks
+.ipynb_checkpoints
+*.ipynb_checkpoints
+*.nbconvert.ipynb
+output_notebooks/
+.ipynb
+
+# Data, datasets, datasets caches and large artifacts
+data/
+datasets/
+raw_data/
+processed_data/
+cached_data/
+*.csv
+*.tsv
+*.parquet
+*.tfrecord
+*.h5
+*.sqlite3
+*.db
+*.db-journal
+downloads/
+incoming/
+
+# Models, checkpoints, weights and large binaries
+models/
+model/
+checkpoints/
+checkpoints-*/
+saved_models/
+*.ckpt
+*.pt
+*.pth
+*.safetensors
+*.bin
+*.weights
+*.h5
+*.pb
+*.onnx
+*.tflite
+*.model
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+
+# ML tooling & experiment tracking
+mlruns/
+mlflow/
+wandb/
+.wandb/
+tensorboard/
+runs/
+events.out.tfevents.*
+tb_logs/
+
+# Caches
+.cache/
+.cache_huggingface/
+huggingface/
+.huggingface/
+transformers_cache/
+HF_HOME/
+TORCH_HOME/
+spotdl-cache/
+
+# Logs and reports
+logs/
+*.log
+*.out
+reports/
+predictions/
+results/
+
+# Secrets, credentials, configs
+.env
+.env.local
+secrets.env
+credentials
+aws_credentials
+.aws/
+gcloud/
+*.pem
+*.key
+
+# IDEs and editors
+.vscode/
+.idea/
+*.iml
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node / frontend (if present)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Docker / build artifacts
+docker-compose.override.yml
+build/
+dist/
+tmp/
+*.local
+
+# Misc
+*.egg
+*.egg-info/
+*.lock
