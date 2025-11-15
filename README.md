@@ -57,23 +57,23 @@ The system uses the **Public Jira Dataset** from Zenodo ([link](https://zenodo.o
 Comprehensive system design documentation is available in the `/docs` directory:
 
 ### 🚀 Getting Started (START HERE!)
-- **[PROJECT_IMPLEMENTATION_PLAN.md](PROJECT_IMPLEMENTATION_PLAN.md)** - Complete 15-day implementation plan (6 hours/day)
+- **[PROJECT_IMPLEMENTATION_PLAN.md](docs/planning/PROJECT_IMPLEMENTATION_PLAN.md)** - Complete 15-day implementation plan (6 hours/day)
   - Perfect for beginners in CI/CD, AWS, and MLOps
   - Day-by-day breakdown with hour estimates
   - Learning resources and tutorials
   - Cost management and troubleshooting
   
-- **[LEARNING_ROADMAP.md](LEARNING_ROADMAP.md)** - Structured learning path for AWS, CI/CD & MLOps
+- **[LEARNING_ROADMAP.md](docs/planning/LEARNING_ROADMAP.md)** - Structured learning path for AWS, CI/CD & MLOps
   - Pre-study recommendations
   - Essential AWS services guide
   - Hands-on tutorials and practice exercises
   
-- **[PROGRESS_TRACKER.md](PROGRESS_TRACKER.md)** - Track your daily progress
+- **[PROGRESS_TRACKER.md](docs/planning/PROGRESS_TRACKER.md)** - Track your daily progress
   - Daily checkpoints and milestones
   - Time tracking and skill development
   - Retrospective template
   
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - One-page cheat sheet
+- **[QUICK_REFERENCE.md](docs/planning/QUICK_REFERENCE.md)** - One-page cheat sheet
   - Essential commands (AWS CLI, Docker, Git, Terraform)
   - Code snippets and common patterns
   - Troubleshooting quick fixes
@@ -262,22 +262,22 @@ Drift Detection → Retraining (Loop)
 
 **Start with these documents in order:**
 
-1. **[PROJECT_IMPLEMENTATION_PLAN.md](PROJECT_IMPLEMENTATION_PLAN.md)** - Your 15-day roadmap
+1. **[PROJECT_IMPLEMENTATION_PLAN.md](docs/planning/PROJECT_IMPLEMENTATION_PLAN.md)** - Your 15-day roadmap
    - Complete day-by-day schedule (6 hours/day)
    - Perfect for RAG/Gen AI developers new to cloud
    - Includes all learning resources and tutorials
 
-2. **[LEARNING_ROADMAP.md](LEARNING_ROADMAP.md)** - Pre-study materials
+2. **[LEARNING_ROADMAP.md](docs/planning/LEARNING_ROADMAP.md)** - Pre-study materials
    - Recommended 1-week preparation
    - Essential AWS concepts
    - CI/CD and MLOps fundamentals
 
-3. **[PROGRESS_TRACKER.md](PROGRESS_TRACKER.md)** - Track your journey
+3. **[PROGRESS_TRACKER.md](docs/planning/PROGRESS_TRACKER.md)** - Track your journey
    - Daily checklists and milestones
    - Time and cost tracking
    - Retrospective templates
 
-4. **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Keep this handy!
+4. **[QUICK_REFERENCE.md](docs/planning/QUICK_REFERENCE.md)** - Keep this handy!
    - Essential commands and code snippets
    - Quick troubleshooting guide
 
